@@ -1,13 +1,25 @@
-import { useState } from "react"
-import { Link } from "react-router-dom"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
-import { Mic, Mail, Lock, Eye, EyeOff } from "lucide-react"
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Mic, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { GoogleLogin } from "@react-oauth/google";
+import { jwtDecode } from "jwt-decode";
 
 export default function LoginPage() {
-  const [showPassword, setShowPassword] = useState(false)
+  const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
+
+  const handleGoogleSuccess = (response: any) => {
+    const decoded: any = jwtDecode(response.credential);
+    navigate("/dashboard");
+  };
+
+  const handleGoogleError = () => {
+    console.error("Google login error");
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -25,13 +37,19 @@ export default function LoginPage() {
         {/* Card */}
         <div className="rounded-2xl border border-border bg-card p-8 shadow-2xl">
           <div className="mb-6 text-center">
-            <h1 className="text-xl font-semibold text-foreground">Welcome back</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Sign in to continue practicing</p>
+            <h1 className="text-xl font-semibold text-foreground">
+              Welcome back
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Sign in to continue practicing
+            </p>
           </div>
 
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-sm">Email</Label>
+              <Label htmlFor="email" className="text-sm">
+                Email
+              </Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -45,8 +63,12 @@ export default function LoginPage() {
 
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-sm">Password</Label>
-                <a href="#" className="text-xs text-primary hover:underline">Forgot password?</a>
+                <Label htmlFor="password" className="text-sm">
+                  Password
+                </Label>
+                <a href="#" className="text-xs text-primary hover:underline">
+                  Forgot password?
+                </a>
               </div>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -61,7 +83,11 @@ export default function LoginPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
                 </button>
               </div>
             </div>
@@ -77,18 +103,34 @@ export default function LoginPage() {
             <Separator className="flex-1" />
           </div>
 
-          <p className="text-center text-sm text-muted-foreground">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+            useOneTap
+            text="signin_with"
+            theme="outline"
+            shape="rectangular"
+            width="100%"
+          />
+
+          <p className="text-center text-sm text-muted-foreground mt-4">
             Don't have an account?{" "}
-            <Link to="/register" className="text-primary hover:underline">Sign up</Link>
+            <Link to="/register" className="text-primary hover:underline">
+              Sign up
+            </Link>
           </p>
         </div>
 
         <div className="mt-4 text-center">
-          <Button variant="ghost" className="w-full text-muted-foreground" asChild>
+          <Button
+            variant="ghost"
+            className="w-full text-muted-foreground"
+            asChild
+          >
             <Link to="/session/configure">Try Guest Demo →</Link>
           </Button>
         </div>
       </div>
     </div>
-  )
+  );
 }

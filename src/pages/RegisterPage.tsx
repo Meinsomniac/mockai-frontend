@@ -1,14 +1,26 @@
-import { useState } from "react"
-import { Link } from "react-router-dom"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
-import { Mic, Mail, Lock, Eye, EyeOff, User } from "lucide-react"
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Mic, Mail, Lock, Eye, EyeOff, User } from "lucide-react";
+import { GoogleLogin } from "@react-oauth/google";
+import { jwtDecode } from "jwt-decode";
 
 export default function RegisterPage() {
-  const [showPassword, setShowPassword] = useState(false)
-  const [showConfirm, setShowConfirm] = useState(false)
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const navigate = useNavigate();
+
+  const handleGoogleSuccess = (response: any) => {
+    const decoded = jwtDecode(response.credential);
+    navigate("/dashboard");
+  };
+
+  const handleGoogleError = () => {
+    console.error("Google login error");
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -26,13 +38,19 @@ export default function RegisterPage() {
         {/* Card */}
         <div className="rounded-2xl border border-border bg-card p-8 shadow-2xl">
           <div className="mb-6 text-center">
-            <h1 className="text-xl font-semibold text-foreground">Create your account</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Start practicing in minutes</p>
+            <h1 className="text-xl font-semibold text-foreground">
+              Create your account
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Start practicing in minutes
+            </p>
           </div>
 
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="name" className="text-sm">Full Name</Label>
+              <Label htmlFor="name" className="text-sm">
+                Full Name
+              </Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -45,7 +63,9 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-sm">Email</Label>
+              <Label htmlFor="email" className="text-sm">
+                Email
+              </Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -58,7 +78,9 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="password" className="text-sm">Password</Label>
+              <Label htmlFor="password" className="text-sm">
+                Password
+              </Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -72,13 +94,19 @@ export default function RegisterPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
                 </button>
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="confirm" className="text-sm">Confirm Password</Label>
+              <Label htmlFor="confirm" className="text-sm">
+                Confirm Password
+              </Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
@@ -92,7 +120,11 @@ export default function RegisterPage() {
                   onClick={() => setShowConfirm(!showConfirm)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
-                  {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showConfirm ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
                 </button>
               </div>
             </div>
@@ -108,12 +140,24 @@ export default function RegisterPage() {
             <Separator className="flex-1" />
           </div>
 
-          <p className="text-center text-sm text-muted-foreground">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+            useOneTap
+            text="signup_with"
+            theme="outline"
+            shape="rectangular"
+            width="100%"
+          />
+
+          <p className="text-center text-sm text-muted-foreground mt-4">
             Already have an account?{" "}
-            <Link to="/login" className="text-primary hover:underline">Log in</Link>
+            <Link to="/login" className="text-primary hover:underline">
+              Log in
+            </Link>
           </p>
         </div>
       </div>
     </div>
-  )
+  );
 }
