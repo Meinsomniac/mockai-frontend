@@ -7,15 +7,28 @@ import { Separator } from "@/components/ui/separator";
 import { Mic, Mail, Lock, Eye, EyeOff, User } from "lucide-react";
 import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
+import { useGoogleLogin } from "@/api";
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const navigate = useNavigate();
+  const { mutate: googleLogin } = useGoogleLogin();
 
   const handleGoogleSuccess = (response: any) => {
-    const decoded = jwtDecode(response.credential);
-    navigate("/dashboard");
+    const decoded: any = jwtDecode(response.credential);
+    googleLogin(
+      { email: decoded.email, name: decoded.name },
+      {
+        onSuccess: (data) => {
+          if (data.user.isOnBoarded) {
+            navigate("/dashboard");
+          } else {
+            navigate("/set-password");
+          }
+        },
+      },
+    );
   };
 
   const handleGoogleError = () => {
@@ -25,7 +38,6 @@ export default function RegisterPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="mb-8 flex flex-col items-center">
           <Link to="/" className="mb-6 flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary to-[oklch(0.627_0.265_303.9)]">
@@ -35,7 +47,6 @@ export default function RegisterPage() {
           </Link>
         </div>
 
-        {/* Card */}
         <div className="rounded-2xl border border-border bg-card p-8 shadow-2xl">
           <div className="mb-6 text-center">
             <h1 className="text-xl font-semibold text-foreground">

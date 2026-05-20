@@ -20,7 +20,8 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts"
-import { Mic, Plus, Search, TrendingUp, TrendingDown, Activity, Clock, Target, ChevronRight, ChartBar as BarChart3, BookOpen, Code as Code2, Briefcase, MessageSquare, Calculator, Brain, Globe, Star, LogOut } from "lucide-react"
+import { TrendingUp, TrendingDown, Activity, Clock, Target, ChevronRight, ChartBar as BarChart3, BookOpen, Code as Code2, Briefcase, MessageSquare, Calculator, Brain, Globe, Star, Search, Plus } from "lucide-react"
+import DashboardHeader from "@/components/DashboardHeader"
 
 const categoryIcons: Record<string, React.ReactNode> = {
   "Software Engineering": <Code2 className="h-4 w-4" />,
@@ -215,56 +216,15 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Navbar */}
-      <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary to-[oklch(0.627_0.265_303.9)]">
-              <Mic className="h-4 w-4 text-white" />
-            </div>
-            <span className="text-lg font-semibold">MockAI</span>
-          </Link>
-
-          <nav className="hidden md:flex items-center gap-1">
-            <Button variant="ghost" size="sm" className="text-primary font-medium" asChild>
-              <Link to="/dashboard">Dashboard</Link>
-            </Button>
-            <Button variant="ghost" size="sm" className="text-muted-foreground" asChild>
-              <Link to="/session/configure">Practice</Link>
-            </Button>
-          </nav>
-
-          <div className="flex items-center gap-2">
-            <Button size="sm" className="gap-2 hidden sm:inline-flex" asChild>
-              <Link to="/session/configure">
-                <Plus className="h-3.5 w-3.5" />
-                New Session
-              </Link>
-            </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-              <Link to="/login">
-                <LogOut className="h-4 w-4 text-muted-foreground" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </header>
+      <DashboardHeader />
 
       <main className="mx-auto max-w-6xl px-4 py-8 space-y-8">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              Track your mock interview progress
-            </p>
-          </div>
-          <Button size="sm" className="gap-2 sm:hidden" asChild>
-            <Link to="/session/configure">
-              <Plus className="h-3.5 w-3.5" />
-              New
-            </Link>
-          </Button>
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Track your mock interview progress
+          </p>
         </div>
 
         {/* Stats row */}

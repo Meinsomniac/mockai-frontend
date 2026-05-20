@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
 import { Mic, Briefcase, Users, Video, MessageSquare, TrendingUp, ClipboardList, Code as Code2, ChevronRight, ArrowLeft, CircleCheck as CheckCircle2, Brain, Wand as Wand2, Play, Volume2, Keyboard, Bot } from "lucide-react"
+import DashboardHeader from "@/components/DashboardHeader"
 
 const CATEGORIES = [
   { id: "interview", label: "Interview", icon: Briefcase, desc: "Job interview practice" },
@@ -107,21 +108,7 @@ export default function ConfigurePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Top nav */}
-      <nav className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-md">
-        <div className="mx-auto flex h-14 max-w-3xl items-center justify-between px-6">
-          <Link to="/" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-primary to-[oklch(0.627_0.265_303.9)]">
-              <Mic className="h-3.5 w-3.5 text-white" />
-            </div>
-            <span className="font-semibold text-foreground">MockAI</span>
-          </Link>
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <ChevronRight className="h-3 w-3" />
-            <span>Configure Session</span>
-          </div>
-        </div>
-      </nav>
+      <DashboardHeader />
 
       <div className="mx-auto max-w-3xl px-6 py-8">
         {/* Header */}
