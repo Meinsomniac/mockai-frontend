@@ -1,5 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/store/authStore";
+import type {
+  SessionConfig,
+  Session,
+  CreateSessionResponse,
+  StartSessionResponse,
+  GetSessionResponse,
+  SendMessageResponse,
+  EndSessionResponse,
+} from "@/types/session.types";
 
 const API_BASE_URL = "http://localhost:5000/api";
 
@@ -132,11 +141,101 @@ export const useUser = () => {
   });
 };
 
+export const sessionApi = {
+  createSession: (config: SessionConfig) =>
+    fetchApi<CreateSessionResponse>("/session/create", {
+      method: "POST",
+      body: JSON.stringify({ config }),
+    }),
+
+  startSession: (sessionId: string) =>
+    fetchApi<StartSessionResponse>(`/session/${sessionId}/start`, {
+      method: "POST",
+    }),
+
+  getSession: (sessionId: string) =>
+    fetchApi<GetSessionResponse>(`/session/${sessionId}`),
+
+  sendMessage: (sessionId: string, message: string, isComplete = false) =>
+    fetchApi<SendMessageResponse>(`/session/${sessionId}/message`, {
+      method: "POST",
+      body: JSON.stringify({ message, isComplete }),
+    }),
+
+  endSession: (sessionId: string) =>
+    fetchApi<EndSessionResponse>(`/session/${sessionId}/end`, {
+      method: "POST",
+    }),
+
+  getUserSessions: (page = 1, limit = 10) =>
+    fetchApi<{ sessions: Session[]; total: number; page: number; limit: number }>(
+      `/session/?page=${page}&limit=${limit}`,
+    ),
+};
+
+export const useCreateSession = () => {
+  return useMutation({
+    mutationFn: sessionApi.createSession,
+  });
+};
+
+export const useStartSession = () => {
+  return useMutation({
+    mutationFn: sessionApi.startSession,
+  });
+};
+
+export const useGetSession = (sessionId: string) => {
+  return useQuery({
+    queryKey: ["session", sessionId],
+    queryFn: () => sessionApi.getSession(sessionId),
+    enabled: !!sessionId,
+  });
+};
+
+export const useSendMessage = () => {
+  return useMutation({
+    mutationFn: ({
+      sessionId,
+      message,
+      isComplete,
+    }: {
+      sessionId: string
+      message: string
+      isComplete?: boolean
+    }) => sessionApi.sendMessage(sessionId, message, isComplete),
+  });
+};
+
+export const useEndSession = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: sessionApi.endSession,
+    onSuccess: (_, sessionId) => {
+      queryClient.invalidateQueries({ queryKey: ["session", sessionId] });
+    },
+  });
+};
+
+export const useGetUserSessions = (page = 1, limit = 10) => {
+  return useQuery({
+    queryKey: ["user-sessions", page, limit],
+    queryFn: () => sessionApi.getUserSessions(page, limit),
+  });
+};
+
 export default {
   authApi,
+  sessionApi,
   useLogin,
   useRegister,
   useGoogleLogin,
   useUpdatePassword,
   useUser,
+  useCreateSession,
+  useStartSession,
+  useGetSession,
+  useSendMessage,
+  useEndSession,
+  useGetUserSessions,
 };

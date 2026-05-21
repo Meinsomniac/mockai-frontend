@@ -7,8 +7,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Separator } from "@/components/ui/separator"
-import { Mic, Briefcase, Users, Video, MessageSquare, TrendingUp, ClipboardList, Code as Code2, ChevronRight, ArrowLeft, CircleCheck as CheckCircle2, Brain, Wand as Wand2, Play, Volume2, Keyboard, Bot } from "lucide-react"
+import { Mic, Briefcase, Users, Video, MessageSquare, TrendingUp, ClipboardList, Code as Code2, ChevronRight, ArrowLeft, CircleCheck as CheckCircle2, Brain, Wand as Wand2, Play, Volume2, Keyboard, Bot, Loader2 } from "lucide-react"
 import DashboardHeader from "@/components/DashboardHeader"
+import { useCreateSession, useStartSession } from "@/api"
+import type { SessionConfig } from "@/types/session.types"
 
 const CATEGORIES = [
   { id: "interview", label: "Interview", icon: Briefcase, desc: "Job interview practice" },
@@ -54,6 +56,15 @@ const RESPONSE_MODES = [
   { id: "text-only", label: "Text Only", icon: Keyboard, desc: "Type answers" },
 ]
 
+const LANGUAGE_LOCALES: Record<string, string> = {
+  en: "en-US",
+  fr: "fr-FR",
+  es: "es-ES",
+  de: "de-DE",
+  ur: "ur-PK",
+  ar: "ar-SA",
+}
+
 const STEPS = ["Type", "Role", "Mode", "Settings", "Review"]
 
 interface Config {
@@ -74,6 +85,7 @@ export default function ConfigurePage() {
   const navigate = useNavigate()
   const [step, setStep] = useState(1)
   const [topicInput, setTopicInput] = useState("")
+  const [apiError, setApiError] = useState("")
   const [config, setConfig] = useState<Config>({
     category: "interview",
     language: "en",
@@ -87,6 +99,9 @@ export default function ConfigurePage() {
     responseMode: "voice+text",
     aiVoice: true,
   })
+
+  const createSession = useCreateSession()
+  const startSession = useStartSession()
 
   const update = (key: keyof Config, value: unknown) =>
     setConfig((prev) => ({ ...prev, [key]: value }))
@@ -102,9 +117,34 @@ export default function ConfigurePage() {
   const removeTopic = (t: string) =>
     update("topics", config.topics.filter((x) => x !== t))
 
-  const handleStart = () => {
-    navigate("/session/demo-session")
+  const buildSessionConfig = (): SessionConfig => ({
+    category: config.category as SessionConfig["category"],
+    language: config.language,
+    languageLocale: LANGUAGE_LOCALES[config.language] || "en-US",
+    difficulty: config.difficulty as SessionConfig["difficulty"],
+    behaviour: config.behaviour || "Standard interview session",
+    ...(config.jobRole && { jobRole: config.jobRole }),
+    ...(config.topics.length > 0 && { topic: config.topics.join(", ") }),
+    ...(config.company && { company: config.company }),
+    questionCount: config.questionCount as SessionConfig["questionCount"],
+    ...(config.duration && { duration: config.duration as SessionConfig["duration"] }),
+    responseMode: config.responseMode as SessionConfig["responseMode"],
+    aiVoiceEnabled: config.aiVoice,
+  })
+
+  const handleStart = async () => {
+    setApiError("")
+    try {
+      const sessionConfig = buildSessionConfig()
+      const { sessionId } = await createSession.mutateAsync(sessionConfig)
+      await startSession.mutateAsync(sessionId)
+      navigate(`/session/${sessionId}`)
+    } catch (err) {
+      setApiError(err instanceof Error ? err.message : "Failed to start session")
+    }
   }
+
+  const isLoading = createSession.isPending || startSession.isPending
 
   return (
     <div className="min-h-screen bg-background">
@@ -160,6 +200,13 @@ export default function ConfigurePage() {
           </div>
         </div>
 
+        {/* Error message */}
+        {apiError && (
+          <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {apiError}
+          </div>
+        )}
+
         {/* Step content */}
         <div className="mb-8 min-h-[400px]">
           {step === 1 && <Step1 config={config} update={update} />}
@@ -186,8 +233,16 @@ export default function ConfigurePage() {
                 Continue <ChevronRight className="ml-1 h-4 w-4" />
               </Button>
             ) : (
-              <Button size="sm" onClick={handleStart}>
-                <Play className="mr-1 h-4 w-4" /> Start Session
+              <Button size="sm" onClick={handleStart} disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-1 h-4 w-4 animate-spin" /> Starting...
+                  </>
+                ) : (
+                  <>
+                    <Play className="mr-1 h-4 w-4" /> Start Session
+                  </>
+                )}
               </Button>
             )}
           </div>

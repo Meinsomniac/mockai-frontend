@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate, useParams } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Mic, Bot, User, Square, PanelRight, Volume2, Loader as Loader2, CircleCheck as CheckCircle2, SkipForward, Keyboard, X, Clock, TriangleAlert as AlertTriangle } from "lucide-react"
+import { useGetSession, useEndSession } from "@/api"
 
 type Phase = "ai_thinking" | "ai_speaking" | "user_recording" | "processing" | "complete"
 
@@ -22,6 +23,10 @@ const DEMO_CONVERSATION: { q: string; phase: Phase }[] = [
 
 export default function SessionPage() {
   const navigate = useNavigate()
+  const { id: sessionId } = useParams<{ id: string }>()
+  const { data: sessionData, isLoading: sessionLoading } = useGetSession(sessionId || "")
+  const endSessionMutation = useEndSession()
+
   const [phase, setPhase] = useState<Phase>("ai_thinking")
   const [questionIndex, setQuestionIndex] = useState(0)
   const [currentQuestion, setCurrentQuestion] = useState("")
@@ -34,21 +39,24 @@ export default function SessionPage() {
   const recordingInterval = useRef<ReturnType<typeof setInterval> | null>(null)
   const sessionInterval = useRef<ReturnType<typeof setInterval> | null>(null)
 
+  const session = sessionData?.session
+
   useEffect(() => {
     sessionInterval.current = setInterval(() => setSessionTime((t) => t + 1), 1000)
-    // Start with first question
-    setTimeout(() => {
-      const q = DEMO_CONVERSATION[0].q
-      setCurrentQuestion(q)
-      setTranscript([{ role: "ai", content: q }])
-      setPhase("ai_speaking")
-      setTimeout(() => setPhase("user_recording"), 2000)
-    }, 1500)
+    if (session) {
+      setTimeout(() => {
+        const q = DEMO_CONVERSATION[0].q
+        setCurrentQuestion(q)
+        setTranscript([{ role: "ai", content: q }])
+        setPhase("ai_speaking")
+        setTimeout(() => setPhase("user_recording"), 2000)
+      }, 1500)
+    }
 
     return () => {
       if (sessionInterval.current) clearInterval(sessionInterval.current)
     }
-  }, [])
+  }, [session])
 
   useEffect(() => {
     if (phase === "user_recording") {
@@ -86,13 +94,29 @@ export default function SessionPage() {
     }, 1500)
   }
 
-  const handleEnd = () => {
+  const handleEnd = async () => {
     setPhase("complete")
-    setTimeout(() => navigate("/session/results/demo-session"), 1500)
+    if (sessionId) {
+      try {
+        await endSessionMutation.mutateAsync(sessionId)
+      } catch (err) {
+        console.error("Failed to end session:", err)
+      }
+    }
+    setTimeout(() => navigate(`/session/results/${sessionId}`), 1500)
   }
 
   return (
     <div className="flex h-screen flex-col bg-background overflow-hidden">
+      {sessionLoading ? (
+        <div className="flex flex-1 items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Loading session...</p>
+          </div>
+        </div>
+      ) : (
+        <>
       {/* Session Topbar */}
       <header className="flex h-14 items-center justify-between border-b border-border bg-card/80 px-5 backdrop-blur-sm">
         <div className="flex items-center gap-3">
@@ -103,8 +127,10 @@ export default function SessionPage() {
             <span className="text-sm font-semibold">MockAI</span>
           </Link>
           <Separator orientation="vertical" className="h-4" />
-          <Badge variant="outline" className="border-primary/30 text-xs text-primary">Interview</Badge>
-          <Badge variant="outline" className="text-xs">Advanced</Badge>
+          <Badge variant="outline" className="border-primary/30 text-xs text-primary capitalize">
+            {session?.category?.replace("_", " ") || "Interview"}
+          </Badge>
+          <Badge variant="outline" className="text-xs capitalize">{session?.difficulty || "Intermediate"}</Badge>
           <Separator orientation="vertical" className="h-4" />
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Bot className="h-3.5 w-3.5" />
@@ -371,13 +397,13 @@ export default function SessionPage() {
               <Loader2 className="h-4 w-4 animate-spin" />
               Analyzing your performance...
             </div>
-            <Button className="w-full gap-2" asChild>
-              <Link to="/session/results/demo-session">
-                View Results →
-              </Link>
+            <Button className="w-full gap-2" onClick={() => navigate(`/session/results/${sessionId}`)}>
+              View Results →
             </Button>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   )
