@@ -5,114 +5,10 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
-import { Mic, ArrowLeft, RotateCcw, Plus, CircleCheck as CheckCircle2, Circle as XCircle, CircleAlert as AlertCircle, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Minus, Volume2, Clock, Gauge, MessageSquare, Brain, Activity, Star, Target } from "lucide-react"
-
-// Mock results data
-const mockResults = {
-  sessionId: "demo-session",
-  category: "Software Engineering",
-  difficulty: "Senior",
-  duration: "18 min",
-  completedAt: "May 4, 2026",
-  overallScore: 76,
-  subscores: {
-    technicalAccuracy: 82,
-    communication: 71,
-    problemSolving: 80,
-    confidence: 68,
-  },
-  strengths: [
-    "Clear explanation of system design trade-offs",
-    "Good use of concrete examples to illustrate concepts",
-    "Structured problem-solving approach",
-  ],
-  improvements: [
-    "Reduce filler words (um, uh) — detected 14 times",
-    "Speak more confidently — pitch variance was low",
-    "Expand on edge case handling in answers",
-  ],
-  questions: [
-    {
-      id: 1,
-      question: "Can you walk me through how you would design a URL shortening service like bit.ly?",
-      userAnswer:
-        "I would design it with a few key components. First, a hash generation service to create short codes from long URLs. I'd use a base62 encoding scheme with 6-7 characters giving us billions of unique URLs. For storage, a distributed key-value store like Redis for caching hot URLs and a relational database for persistence. The write path would hash the URL, store it, and return the short code. The read path would look up in cache first, then the DB. For scale, I'd use consistent hashing to distribute load across multiple nodes.",
-      score: 85,
-      status: "correct" as const,
-      feedback:
-        "Excellent response. You correctly identified the core components and explained the trade-offs between caching and persistence. Your mention of consistent hashing shows strong distributed systems knowledge. To improve: discuss collision handling and URL expiration strategies.",
-      keyPoints: [
-        { point: "Hash generation strategy", met: true },
-        { point: "Storage layer design", met: true },
-        { point: "Read/write path optimization", met: true },
-        { point: "Collision handling", met: false },
-        { point: "URL expiration / TTL", met: false },
-      ],
-      duration: "4m 12s",
-    },
-    {
-      id: 2,
-      question: "How would you approach debugging a memory leak in a production Node.js application?",
-      userAnswer:
-        "Um, I would first, uh, start by monitoring memory usage over time to confirm the leak. Then I'd use Node's built-in heap profiler or a tool like clinic.js to take heap snapshots. By comparing snapshots over time I can identify which objects are growing. Common causes are event listener accumulation, closures holding references, or global variable misuse. Once identified I'd patch and deploy with feature flags.",
-      score: 72,
-      status: "partial" as const,
-      feedback:
-        "Good foundational knowledge but the answer lacked depth on specific tooling and the systematic debugging process. You mentioned clinic.js which is correct, but didn't discuss Chrome DevTools remote debugging for production, or heap diff analysis techniques. The mention of feature flags for deployment was a nice touch.",
-      keyPoints: [
-        { point: "Memory monitoring approach", met: true },
-        { point: "Heap snapshot tooling", met: true },
-        { point: "Common leak patterns", met: true },
-        { point: "Chrome DevTools remote debugging", met: false },
-        { point: "Heap diff analysis", met: false },
-      ],
-      duration: "3m 45s",
-    },
-    {
-      id: 3,
-      question: "Explain the difference between horizontal and vertical scaling, and when you'd choose each.",
-      userAnswer:
-        "Horizontal scaling means adding more machines to your pool, while vertical scaling means adding more resources like CPU or RAM to an existing machine. I'd choose vertical scaling for stateful applications that are hard to distribute, like some databases in early stages. Horizontal scaling is better for stateless services, gives better fault tolerance, and is more cost-effective at scale. Modern cloud architecture favors horizontal scaling with auto-scaling groups.",
-      score: 88,
-      status: "correct" as const,
-      feedback:
-        "Strong answer with clear definitions and practical decision criteria. Your mention of statefulness as a deciding factor is exactly right. Good awareness of cloud-native patterns. Minor improvement: could mention specific challenges of horizontal scaling like data consistency and session management.",
-      keyPoints: [
-        { point: "Clear distinction between approaches", met: true },
-        { point: "Stateful vs stateless consideration", met: true },
-        { point: "Cost and fault tolerance", met: true },
-        { point: "Cloud-native patterns", met: true },
-        { point: "Data consistency challenges", met: false },
-      ],
-      duration: "3m 02s",
-    },
-  ],
-  speechAnalysis: {
-    fillerWords: { count: 14, rate: "2.3/min", trend: "down" as const },
-    speakingPace: { wpm: 142, status: "good" as const, ideal: "130-160 wpm" },
-    pausePattern: { avgPause: "1.2s", longPauses: 3, status: "good" as const },
-    clarity: { score: 78, label: "Clear" },
-    confidence: { score: 68, label: "Moderate" },
-    vocabulary: { score: 82, label: "Strong" },
-    topFillerWords: [
-      { word: "um", count: 8 },
-      { word: "uh", count: 4 },
-      { word: "like", count: 2 },
-    ],
-    toneProfile: {
-      energy: 62,
-      enthusiasm: 58,
-      authority: 71,
-      friendliness: 74,
-    },
-    improvementTips: [
-      "Practice pausing instead of using filler words — silence is powerful",
-      "Vary your speaking pace to emphasize key points",
-      "Use more assertive language: say 'I would' instead of 'I think I would'",
-      "Start answers with a direct statement before elaborating",
-    ],
-  },
-}
+import { Spinner } from "@/components/ui/spinner"
+import { Mic, ArrowLeft, RotateCcw, Plus, CircleCheck as CheckCircle2, CircleAlert as AlertCircle, Volume2, Clock, Gauge, MessageSquare, Brain, Activity, Star, Target } from "lucide-react"
+import { useGetSessionResults } from "@/api"
+import type { DetailedFeedback } from "@/types/session.types"
 
 type ExpandedState = Record<number, boolean>
 
@@ -187,32 +83,26 @@ function QuestionCard({
   expanded,
   onToggle,
 }: {
-  q: (typeof mockResults.questions)[0]
+  q: DetailedFeedback
   expanded: boolean
   onToggle: () => void
 }) {
   const statusConfig = {
-    correct: {
+    true: {
       icon: <CheckCircle2 className="h-5 w-5 text-[oklch(0.645_0.2_142)]" />,
       label: "Strong Answer",
       badge: "bg-[oklch(0.645_0.2_142)]/15 text-[oklch(0.645_0.2_142)] border-[oklch(0.645_0.2_142)]/30",
       border: "border-l-[oklch(0.645_0.2_142)]",
     },
-    partial: {
+    false: {
       icon: <AlertCircle className="h-5 w-5 text-[oklch(0.75_0.183_84)]" />,
-      label: "Partial Credit",
+      label: "Needs Work",
       badge: "bg-[oklch(0.75_0.183_84)]/15 text-[oklch(0.75_0.183_84)] border-[oklch(0.75_0.183_84)]/30",
       border: "border-l-[oklch(0.75_0.183_84)]",
     },
-    incorrect: {
-      icon: <XCircle className="h-5 w-5 text-destructive" />,
-      label: "Needs Work",
-      badge: "bg-destructive/15 text-destructive border-destructive/30",
-      border: "border-l-destructive",
-    },
   }
 
-  const cfg = statusConfig[q.status]
+  const cfg = statusConfig[q.isCorrect ? "true" : "false"]
 
   return (
     <div className={`rounded-xl border border-border border-l-4 ${cfg.border} bg-card overflow-hidden`}>
@@ -222,25 +112,13 @@ function QuestionCard({
             {cfg.icon}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                <span className="text-xs font-medium text-muted-foreground">Q{q.id}</span>
+                <span className="text-xs font-medium text-muted-foreground">Q{q.questionNumber}</span>
                 <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${cfg.badge}`}>
                   {cfg.label}
                 </span>
-                <span className="text-xs text-muted-foreground ml-auto">{q.duration}</span>
               </div>
               <p className="text-sm font-medium text-foreground line-clamp-2">{q.question}</p>
             </div>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="text-right">
-              <div className="text-xl font-bold text-foreground">{q.score}</div>
-              <div className="text-xs text-muted-foreground">score</div>
-            </div>
-            {expanded ? (
-              <ChevronUp className="h-4 w-4 text-muted-foreground" />
-            ) : (
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-            )}
           </div>
         </div>
       </button>
@@ -262,28 +140,28 @@ function QuestionCard({
             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
               AI Feedback
             </p>
-            <p className="text-sm text-foreground/80 leading-relaxed">{q.feedback}</p>
+            <p className="text-sm text-foreground/80 leading-relaxed">{q.explanation}</p>
           </div>
 
-          <div>
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-              Key Points Coverage
-            </p>
-            <div className="space-y-2">
-              {q.keyPoints.map((kp, i) => (
-                <div key={i} className="flex items-center gap-2.5">
-                  {kp.met ? (
-                    <CheckCircle2 className="h-4 w-4 text-[oklch(0.645_0.2_142)] shrink-0" />
-                  ) : (
-                    <XCircle className="h-4 w-4 text-muted-foreground shrink-0" />
-                  )}
-                  <span className={`text-sm ${kp.met ? "text-foreground" : "text-muted-foreground"}`}>
-                    {kp.point}
-                  </span>
-                </div>
-              ))}
+          {q.alternativeApproach && (
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                Better Approach
+              </p>
+              <p className="text-sm text-foreground/80 leading-relaxed">{q.alternativeApproach}</p>
             </div>
-          </div>
+          )}
+
+          {q.correctAnswer && (
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                Ideal Answer
+              </p>
+              <p className="text-sm text-foreground/80 leading-relaxed bg-muted/30 rounded-lg p-3">
+                {q.correctAnswer}
+              </p>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -328,21 +206,70 @@ function SpeechScoreCard({
   )
 }
 
-export default function ResultsPage() {
-  useParams()
+function ResultsLoadingState(): React.ReactElement {
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="flex flex-col items-center gap-4">
+        <Spinner className="size-8" />
+        <p className="text-sm text-muted-foreground">Loading your results...</p>
+      </div>
+    </div>
+  )
+}
+
+function ResultsErrorState({ onRetry }: { onRetry: () => void }): React.ReactElement {
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="flex flex-col items-center gap-4 text-center max-w-md">
+        <div className="h-12 w-12 rounded-full bg-destructive/15 flex items-center justify-center">
+          <AlertCircle className="h-6 w-6 text-destructive" />
+        </div>
+        <h2 className="text-lg font-semibold text-foreground">Results Not Available</h2>
+        <p className="text-sm text-muted-foreground">
+          The results for this session could not be loaded. The session may still be processing or no results were generated.
+        </p>
+        <div className="flex gap-3">
+          <Button variant="outline" onClick={onRetry}>
+            Try Again
+          </Button>
+          <Button asChild>
+            <Link to="/dashboard">Back to Dashboard</Link>
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function ResultsPage(): React.ReactElement {
+  const { id: sessionId } = useParams<{ id: string }>()
+  const { data, isLoading, isError, refetch } = useGetSessionResults(sessionId || "")
   const [expandedQuestions, setExpandedQuestions] = useState<ExpandedState>({})
-  const r = mockResults
 
   const toggleQuestion = (id: number) => {
     setExpandedQuestions((prev) => ({ ...prev, [id]: !prev[id] }))
   }
 
+  if (isLoading) {
+    return <ResultsLoadingState />
+  }
+
+  if (isError || !data) {
+    return <ResultsErrorState onRetry={() => refetch()} />
+  }
+
+  const { result: r, session } = data
+
+  const durationMinutes = session.durationActual
+    ? Math.floor(session.durationActual / 60)
+    : session.duration ?? 0
+
+  const categoryLabel = session.category
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c: string) => c.toUpperCase())
+
   const avgScore = Math.round(
-    (r.subscores.technicalAccuracy +
-      r.subscores.communication +
-      r.subscores.problemSolving +
-      r.subscores.confidence) /
-      4
+    (r.technicalScore + r.communicationScore + r.confidenceScore) / 3
   )
 
   return (
@@ -365,13 +292,13 @@ export default function ResultsPage() {
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="text-xs">
-              {r.category}
+              {categoryLabel}
             </Badge>
             <Badge variant="outline" className="text-xs">
-              {r.difficulty}
+              {session.difficulty}
             </Badge>
             <Badge variant="outline" className="text-xs text-muted-foreground">
-              {r.completedAt}
+              {durationMinutes} min
             </Badge>
           </div>
           <div className="flex items-center gap-2">
@@ -406,24 +333,24 @@ export default function ResultsPage() {
               <div>
                 <h2 className="text-xl font-semibold text-foreground mb-1">Session Complete</h2>
                 <p className="text-sm text-muted-foreground">
-                  {r.questions.length} questions answered · {r.duration} · {r.category}
+                  {r.detailedFeedback.length} questions answered · {durationMinutes} min · {categoryLabel}
                 </p>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <SubScoreBar label="Technical Accuracy" score={r.subscores.technicalAccuracy} />
-                <SubScoreBar label="Communication" score={r.subscores.communication} />
-                <SubScoreBar label="Problem Solving" score={r.subscores.problemSolving} />
-                <SubScoreBar label="Confidence" score={r.subscores.confidence} />
+                <SubScoreBar label="Technical Accuracy" score={r.technicalScore} />
+                <SubScoreBar label="Communication" score={r.communicationScore} />
+                <SubScoreBar label="Confidence" score={r.confidenceScore} />
+                <SubScoreBar label="Professionalism" score={r.professionalismScore} />
               </div>
             </div>
 
             {/* Quick stats */}
             <div className="flex md:flex-col gap-4 md:gap-3 shrink-0">
               {[
-                { label: "Questions", value: r.questions.length.toString() },
+                { label: "Questions", value: r.detailedFeedback.length.toString() },
                 {
                   label: "Correct",
-                  value: r.questions.filter((q) => q.status === "correct").length.toString(),
+                  value: r.detailedFeedback.filter((q) => q.isCorrect).length.toString(),
                 },
                 { label: "Avg Score", value: avgScore.toString() },
               ].map((stat) => (
@@ -483,7 +410,7 @@ export default function ResultsPage() {
                   <h3 className="font-semibold text-foreground">Areas to Improve</h3>
                 </div>
                 <ul className="space-y-3">
-                  {r.improvements.map((s, i) => (
+                  {r.areasOfImprovement.map((s, i) => (
                     <li key={i} className="flex items-start gap-2.5">
                       <AlertCircle className="h-4 w-4 text-[oklch(0.75_0.183_84)] mt-0.5 shrink-0" />
                       <span className="text-sm text-foreground/80">{s}</span>
@@ -497,24 +424,20 @@ export default function ResultsPage() {
             <div className="rounded-xl border border-border bg-card p-5">
               <h3 className="font-semibold text-foreground mb-4">Question Performance</h3>
               <div className="space-y-3">
-                {r.questions.map((q) => (
-                  <div key={q.id} className="flex items-center gap-4">
+                {r.detailedFeedback.map((q) => (
+                  <div key={q.questionNumber} className="flex items-center gap-4">
                     <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center shrink-0">
-                      <span className="text-xs font-medium text-muted-foreground">{q.id}</span>
+                      <span className="text-xs font-medium text-muted-foreground">{q.questionNumber}</span>
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-foreground truncate">{q.question}</p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <div className="w-20 h-1.5 rounded-full bg-muted overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-primary"
-                          style={{ width: `${q.score}%` }}
-                        />
-                      </div>
-                      <span className="text-sm font-medium text-foreground w-8 text-right">
-                        {q.score}
-                      </span>
+                      {q.isCorrect ? (
+                        <CheckCircle2 className="h-4 w-4 text-[oklch(0.645_0.2_142)]" />
+                      ) : (
+                        <AlertCircle className="h-4 w-4 text-[oklch(0.75_0.183_84)]" />
+                      )}
                     </div>
                   </div>
                 ))}
@@ -524,12 +447,12 @@ export default function ResultsPage() {
 
           {/* ANSWERS TAB */}
           <TabsContent value="answers" className="mt-6 space-y-4">
-            {r.questions.map((q) => (
+            {r.detailedFeedback.map((q) => (
               <QuestionCard
-                key={q.id}
+                key={q.questionNumber}
                 q={q}
-                expanded={!!expandedQuestions[q.id]}
-                onToggle={() => toggleQuestion(q.id)}
+                expanded={!!expandedQuestions[q.questionNumber]}
+                onToggle={() => toggleQuestion(q.questionNumber)}
               />
             ))}
           </TabsContent>
@@ -541,20 +464,20 @@ export default function ResultsPage() {
               <SpeechScoreCard
                 icon={<Volume2 className="h-4 w-4" />}
                 label="Clarity"
-                score={r.speechAnalysis.clarity.score}
-                sublabel={r.speechAnalysis.clarity.label}
+                score={r.clarityScore}
+                sublabel={r.clarityScore >= 80 ? "Excellent" : r.clarityScore >= 60 ? "Good" : "Needs Work"}
               />
               <SpeechScoreCard
                 icon={<Gauge className="h-4 w-4" />}
                 label="Confidence"
-                score={r.speechAnalysis.confidence.score}
-                sublabel={r.speechAnalysis.confidence.label}
+                score={r.speechConfidenceScore}
+                sublabel={r.speechConfidenceScore >= 80 ? "Strong" : r.speechConfidenceScore >= 60 ? "Moderate" : "Low"}
               />
               <SpeechScoreCard
                 icon={<Brain className="h-4 w-4" />}
-                label="Vocabulary"
-                score={r.speechAnalysis.vocabulary.score}
-                sublabel={r.speechAnalysis.vocabulary.label}
+                label="Expression"
+                score={r.expressionScore}
+                sublabel={r.expressionScore >= 80 ? "Engaging" : r.expressionScore >= 60 ? "Natural" : "Monotone"}
               />
             </div>
 
@@ -570,10 +493,10 @@ export default function ResultsPage() {
                     </div>
                     <div className="text-right">
                       <span className="text-sm font-medium text-foreground">
-                        {r.speechAnalysis.speakingPace.wpm} wpm
+                        {r.linguisticMetrics?.wordsPerMinute ?? 0} wpm
                       </span>
                       <p className="text-xs text-[oklch(0.645_0.2_142)]">
-                        {r.speechAnalysis.speakingPace.ideal}
+                        {r.paceScore >= 80 ? "Ideal pace" : "Review pace"}
                       </p>
                     </div>
                   </div>
@@ -584,7 +507,7 @@ export default function ResultsPage() {
                       Avg Pause Length
                     </div>
                     <span className="text-sm font-medium text-foreground">
-                      {r.speechAnalysis.pausePattern.avgPause}
+                      {r.acousticMetrics?.avgPauseDuration?.toFixed(1) ?? 0}s
                     </span>
                   </div>
                   <Separator />
@@ -595,75 +518,80 @@ export default function ResultsPage() {
                     </div>
                     <div className="text-right">
                       <span className="text-sm font-medium text-foreground">
-                        {r.speechAnalysis.fillerWords.count} total
+                        {r.linguisticMetrics?.fillerWordCount ?? 0} total
                       </span>
                       <p className="text-xs text-muted-foreground">
-                        {r.speechAnalysis.fillerWords.rate}
+                        {(r.linguisticMetrics?.fillerWordRate ?? 0).toFixed(1)}%
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="pt-2">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                    Top Filler Words
-                  </p>
-                  <div className="flex gap-2 flex-wrap">
-                    {r.speechAnalysis.topFillerWords.map((fw) => (
-                      <div
-                        key={fw.word}
-                        className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1"
-                      >
-                        <span className="text-sm font-medium text-foreground">"{fw.word}"</span>
-                        <span className="text-xs text-muted-foreground">×{fw.count}</span>
-                      </div>
-                    ))}
+                {(r.linguisticMetrics?.fillerWordsUsed?.length ?? 0) > 0 && (
+                  <div className="pt-2">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                      Top Filler Words
+                    </p>
+                    <div className="flex gap-2 flex-wrap">
+                      {r.linguisticMetrics?.fillerWordsUsed.map((word) => (
+                        <div
+                          key={word}
+                          className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1"
+                        >
+                          <span className="text-sm font-medium text-foreground">"{word}"</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
-              {/* Tone profile */}
+              {/* Tone profile from speechFeedback */}
               <div className="rounded-xl border border-border bg-card p-5 space-y-4">
-                <h3 className="font-semibold text-foreground">Tone Profile</h3>
-                <div className="space-y-3">
-                  {Object.entries(r.speechAnalysis.toneProfile).map(([key, val]) => (
-                    <div key={key} className="space-y-1">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground capitalize">{key}</span>
-                        <div className="flex items-center gap-1">
-                          {val >= 70 ? (
-                            <TrendingUp className="h-3 w-3 text-[oklch(0.645_0.2_142)]" />
-                          ) : val >= 50 ? (
-                            <Minus className="h-3 w-3 text-muted-foreground" />
-                          ) : (
-                            <TrendingDown className="h-3 w-3 text-destructive" />
-                          )}
-                          <span className="font-medium text-foreground">{val}%</span>
-                        </div>
-                      </div>
-                      <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-primary transition-all duration-700"
-                          style={{ width: `${val}%` }}
-                        />
-                      </div>
+                <h3 className="font-semibold text-foreground">Speech Analysis</h3>
+                {r.speechFeedback?.toneAnalysis && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Detected Tone</span>
+                      <span className="text-sm font-medium text-foreground capitalize">
+                        {r.speechFeedback.toneAnalysis.detectedTone}
+                      </span>
                     </div>
-                  ))}
-                </div>
+                    <Separator />
+                    <p className="text-sm text-foreground/80 leading-relaxed">
+                      {r.speechFeedback.toneAnalysis.description}
+                    </p>
+                  </div>
+                )}
 
-                <div className="pt-2">
-                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-                    Improvement Tips
-                  </p>
-                  <ul className="space-y-2">
-                    {r.speechAnalysis.improvementTips.map((tip, i) => (
-                      <li key={i} className="flex items-start gap-2">
-                        <div className="h-1.5 w-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
-                        <span className="text-xs text-muted-foreground leading-relaxed">{tip}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                {r.speechFeedback?.pacingFeedback && (
+                  <div className="space-y-2 pt-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Pacing</span>
+                      <span className="text-sm font-medium text-foreground capitalize">
+                        {r.speechFeedback.pacingFeedback.classification}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{r.speechFeedback.pacingFeedback.wpmRating}</p>
+                    <p className="text-xs text-foreground/80">{r.speechFeedback.pacingFeedback.recommendation}</p>
+                  </div>
+                )}
+
+                {(r.speechFeedback?.improvementTips?.length ?? 0) > 0 && (
+                  <div className="pt-2">
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+                      Improvement Tips
+                    </p>
+                    <ul className="space-y-2">
+                      {r.speechFeedback?.improvementTips.map((tip, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <div className="h-1.5 w-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                          <span className="text-xs text-muted-foreground leading-relaxed">{tip}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             </div>
           </TabsContent>
@@ -674,46 +602,44 @@ export default function ResultsPage() {
               <div className="p-4 border-b border-border">
                 <h3 className="font-semibold text-foreground">Full Session Transcript</h3>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {r.questions.length} exchanges · {r.duration}
+                  {r.detailedFeedback.length} exchanges · {durationMinutes} min
                 </p>
               </div>
               <ScrollArea className="h-[600px]">
                 <div className="p-4 space-y-6">
-                  {r.questions.map((q, i) => (
-                    <div key={q.id}>
+                  {session.transcript?.map((item, i) => (
+                    <div key={i}>
                       {i > 0 && <Separator className="mb-6" />}
-                      <div className="space-y-4">
-                        {/* AI message */}
-                        <div className="flex gap-3">
-                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-[oklch(0.627_0.265_303.9)]">
-                            <Mic className="h-3.5 w-3.5 text-white" />
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-xs font-semibold text-foreground">AI Interviewer</span>
-                              <span className="text-xs text-muted-foreground">Q{q.id}</span>
+                      <div className="flex gap-3">
+                        {item.role === "ai" ? (
+                          <>
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-[oklch(0.627_0.265_303.9)]">
+                              <Mic className="h-3.5 w-3.5 text-white" />
                             </div>
-                            <div className="rounded-xl rounded-tl-none bg-muted/50 border border-border p-3">
-                              <p className="text-sm text-foreground">{q.question}</p>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-xs font-semibold text-foreground">AI Interviewer</span>
+                              </div>
+                              <div className="rounded-xl rounded-tl-none bg-muted/50 border border-border p-3">
+                                <p className="text-sm text-foreground">{item.content}</p>
+                              </div>
                             </div>
-                          </div>
-                        </div>
-
-                        {/* User message */}
-                        <div className="flex gap-3 flex-row-reverse">
-                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary border border-border">
-                            <span className="text-xs font-semibold text-foreground">You</span>
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 justify-end mb-1">
-                              <span className="text-xs text-muted-foreground">{q.duration}</span>
+                          </>
+                        ) : (
+                          <div className="flex gap-3 flex-row-reverse w-full">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-secondary border border-border">
                               <span className="text-xs font-semibold text-foreground">You</span>
                             </div>
-                            <div className="rounded-xl rounded-tr-none bg-primary/10 border border-primary/20 p-3">
-                              <p className="text-sm text-foreground">{q.userAnswer}</p>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 justify-end mb-1">
+                                <span className="text-xs font-semibold text-foreground">You</span>
+                              </div>
+                              <div className="rounded-xl rounded-tr-none bg-primary/10 border border-primary/20 p-3">
+                                <p className="text-sm text-foreground">{item.content}</p>
+                              </div>
                             </div>
                           </div>
-                        </div>
+                        )}
                       </div>
                     </div>
                   ))}

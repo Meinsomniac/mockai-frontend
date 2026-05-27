@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import GuestRoute from "@/components/GuestRoute";
 import OnboardingRoute from "@/components/OnboardingRoute";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -15,16 +16,18 @@ import DashboardPage from "@/pages/DashboardPage";
 export default function App() {
   return (
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-      <Routes>
-        <Route path="/" element={<GuestRoute><LandingPage /></GuestRoute>} />
-        <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
-        <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />
-        <Route path="/set-password" element={<OnboardingRoute><SetPasswordPage /></OnboardingRoute>} />
-        <Route path="/session/configure" element={<ProtectedRoute><ConfigurePage /></ProtectedRoute>} />
-        <Route path="/session/:id" element={<ProtectedRoute><SessionPage /></ProtectedRoute>} />
-        <Route path="/session/results/:id" element={<ProtectedRoute><ResultsPage /></ProtectedRoute>} />
-        <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
-      </Routes>
+      <ErrorBoundary>
+        <Routes>
+          <Route path="/" element={<GuestRoute><LandingPage /></GuestRoute>} />
+          <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
+          <Route path="/register" element={<GuestRoute><RegisterPage /></GuestRoute>} />
+          <Route path="/set-password" element={<OnboardingRoute><SetPasswordPage /></OnboardingRoute>} />
+          <Route path="/session/configure" element={<ProtectedRoute><ConfigurePage /></ProtectedRoute>} />
+          <Route path="/session/:id" element={<ProtectedRoute><SessionPage /></ProtectedRoute>} />
+          <Route path="/session/results/:id" element={<ProtectedRoute><ResultsPage /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+        </Routes>
+      </ErrorBoundary>
     </GoogleOAuthProvider>
   );
 }

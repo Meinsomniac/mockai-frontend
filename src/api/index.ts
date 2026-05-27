@@ -3,6 +3,7 @@ import { useAuthStore } from "@/store/authStore";
 import type {
   SessionConfig,
   Session,
+  Result,
   CreateSessionResponse,
   StartSessionResponse,
   GetSessionResponse,
@@ -193,6 +194,20 @@ export const useGetSession = (sessionId: string) => {
   });
 };
 
+export const useGetSessionResults = (sessionId: string) => {
+  return useQuery({
+    queryKey: ["results", sessionId],
+    queryFn: async (): Promise<{ result: Result; session: Session }> => {
+      const data = await sessionApi.getSession(sessionId);
+      if (!data.session.result) {
+        throw new Error("Results not available yet");
+      }
+      return { result: data.session.result as Result, session: data.session };
+    },
+    enabled: !!sessionId,
+  });
+};
+
 export const useSendMessage = () => {
   return useMutation({
     mutationFn: ({
@@ -235,6 +250,7 @@ export default {
   useCreateSession,
   useStartSession,
   useGetSession,
+  useGetSessionResults,
   useSendMessage,
   useEndSession,
   useGetUserSessions,

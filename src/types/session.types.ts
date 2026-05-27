@@ -49,6 +49,7 @@ export interface Session {
   durationActual: number | null
   createdAt: string
   updatedAt: string
+  result?: Result | null
 }
 
 export interface TranscriptItem {
@@ -81,4 +82,66 @@ export interface SendMessageResponse {
 export interface EndSessionResponse {
   message: string
   sessionId: string
+}
+
+export interface DetailedFeedback {
+  questionNumber: number
+  question: string
+  userAnswer: string
+  isCorrect: boolean
+  correctAnswer: string
+  explanation: string
+  alternativeApproach: string
+}
+
+export interface AcousticMetrics {
+  averageVolume: number
+  peakVolume: number
+  volumeVariance: number
+  totalPauses: number
+  totalSilenceDuration: number
+  avgPauseDuration: number
+  longPauses: number
+}
+
+export interface LinguisticMetrics {
+  wordsPerMinute: number
+  fillerWordCount: number
+  fillerWordRate: number
+  fillerWordsUsed: string[]
+  responseLatencyMs: number
+  avgRecognitionConfidence: number
+  vocabularyRichness: number
+  totalWordCount: number
+  interimCorrectionRate: number
+}
+
+export interface SpeechFeedback {
+  toneAnalysis: { detectedTone: string; description: string }
+  hesitationAnalysis: { level: string; patterns: string[]; worstMoment: string }
+  languageAnalysis: { selfDoubtPhrases: string[]; strongPhrases: string[]; vocabularyLevel: string }
+  pacingFeedback: { classification: string; wpmRating: string; recommendation: string }
+  improvementTips: string[]
+}
+
+export interface Result {
+  id: string
+  sessionId: string
+  overallScore: number
+  communicationScore: number
+  technicalScore: number
+  confidenceScore: number
+  speechOverallScore: number
+  speechConfidenceScore: number
+  paceScore: number
+  clarityScore: number
+  expressionScore: number
+  professionalismScore: number
+  strengths: string[]
+  areasOfImprovement: string[]
+  detailedFeedback: DetailedFeedback[]
+  acousticMetrics: AcousticMetrics
+  linguisticMetrics: LinguisticMetrics
+  speechFeedback: SpeechFeedback
+  createdAt: string
 }
