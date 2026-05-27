@@ -65,6 +65,7 @@ export interface CreateSessionResponse {
 export interface StartSessionResponse {
   message: string
   session: Session
+  initialQuestion: string
 }
 
 export interface GetSessionResponse {
@@ -72,7 +73,8 @@ export interface GetSessionResponse {
 }
 
 export interface SendMessageResponse {
-  message: string
+  aiResponse: string
+  questionNumber: number
   isComplete: boolean
 }
 

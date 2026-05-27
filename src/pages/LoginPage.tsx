@@ -12,8 +12,7 @@ import { useGoogleLogin } from "@/api";
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-  const { mutate: googleLogin, isPending: isGoogleLoginPending } =
-    useGoogleLogin();
+  const { mutate: googleLogin } = useGoogleLogin();
 
   const handleGoogleSuccess = (response: any) => {
     const decoded: any = jwtDecode(response.credential);
